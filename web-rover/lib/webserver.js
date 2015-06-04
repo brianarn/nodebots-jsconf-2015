@@ -4,7 +4,40 @@ var Hapi = require('hapi');
 var Joi = require('joi');
 var log = require('./log');
 var events = require('./events');
-debugger;
+var board = require('./board');
+var RoverMotor = require('./RoverMotor');
+
+var motors = {
+  left: null,
+  right: null
+};
+
+var boardReady = false;
+
+// Bind up some events
+events.on('boardReady', function (data) {
+  boardReady = true;
+  debugger;
+  motors = {
+    left: new RoverMotor('left', data.motors.left),
+    right: new RoverMotor('right', data.motors.right)
+  }
+});
+
+// Simple function to repeat common actions
+function driveMotor(eventType, eventData) {
+  // Determine motors to drive
+  var motorsToDrive;
+  if (eventData.source === 'all') {
+    motorsToDrive = [motors.left, motors.right]
+  } else {
+    motorsToDrive = [motors[eventData.source]];
+  }
+
+  motorsToDrive.forEach(function (motor) {
+    motor[eventType](eventData.clientY);
+  });
+}
 
 // Set up our server
 log.warn('Starting up the web server');
@@ -27,6 +60,30 @@ io.on('connection', function (socket) {
       ' - clientY: ' + data.clientY,
     ].join('\n');
     log.info(message);
+
+    if (!boardReady) {
+      log.warn('Board not ready, nothing happening');
+      return;
+    }
+
+    driveMotor('start', data);
+  });
+
+  socket.on('touchmove', function (data) {
+    var message = [
+      'touchmove:',
+      ' - source: ' + data.source,
+      ' - clientX: ' + data.clientX,
+      ' - clientY: ' + data.clientY,
+    ].join('\n');
+    log.info(message);
+
+    if (!boardReady) {
+      log.warn('Board not ready, nothing happening');
+      return;
+    }
+
+    driveMotor('move', data);
   });
 
   socket.on('touchend', function (data) {
@@ -35,6 +92,13 @@ io.on('connection', function (socket) {
       ' - source: ' + data.source
     ].join('\n');
     log.info(message);
+
+    if (!boardReady) {
+      log.warn('Board not ready, nothing happening');
+      return;
+    }
+
+    driveMotor('stop', data);
   });
 });
 
@@ -65,4 +129,4 @@ server.start(function () {
   events.emit('webserverReady');
 });
 
-exports.server = server;
+module.exports = server;

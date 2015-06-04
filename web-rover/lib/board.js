@@ -10,16 +10,24 @@ var board = new five.Board();
 
 board.on("ready", function() {
   log.info('Board ready!');
-  events.emit('boardReady');
 
-  var leftMotor = exports.leftMotor = new five.Motor(five.Motor.SHIELD_CONFIGS.POLOLU_DRV8835_SHIELD.M1);
-  var rightMotor = exports.leftMotor = new five.Motor(five.Motor.SHIELD_CONFIGS.POLOLU_DRV8835_SHIELD.M2);
+  var leftMotor = new five.Motor(five.Motor.SHIELD_CONFIGS.POLOLU_DRV8835_SHIELD.M2);
+  var rightMotor = new five.Motor(five.Motor.SHIELD_CONFIGS.POLOLU_DRV8835_SHIELD.M1);
 
   // Being safe for likely zero reason
   leftMotor.stop();
   rightMotor.stop();
 
+  // Send out notice of our startup
+  events.emit('boardReady', {
+    board: board,
+    motors: {
+      left: leftMotor,
+      right: rightMotor
+    }
+  });
+
   this.repl.inject(exports);
 });
 
-exports.board = board;
+module.exports = board;
