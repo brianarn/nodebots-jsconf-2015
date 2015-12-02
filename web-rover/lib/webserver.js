@@ -17,11 +17,10 @@ var boardReady = false;
 // Bind up some events
 events.on('boardReady', function (data) {
   boardReady = true;
-  debugger;
   motors = {
     left: new RoverMotor('left', data.motors.left),
     right: new RoverMotor('right', data.motors.right)
-  }
+  };
 });
 
 // Simple function to repeat common actions
@@ -29,7 +28,7 @@ function driveMotor(eventType, eventData) {
   // Determine motors to drive
   var motorsToDrive;
   if (eventData.source === 'all') {
-    motorsToDrive = [motors.left, motors.right]
+    motorsToDrive = [motors.left, motors.right];
   } else {
     motorsToDrive = [motors[eventData.source]];
   }
